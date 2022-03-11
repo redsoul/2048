@@ -10,28 +10,28 @@
 </template>
 
 <script>
-    import Board from './components/Board.vue'
-    import Score from './components/Score.vue'
-    import Overlay from './components/Overlay.vue'
+import Board from './components/Board.vue';
+import Score from './components/Score.vue';
+import Overlay from './components/Overlay.vue';
 
-    export default {
-        name: 'app',
-        computed: {
-            gameOver() {
-                return this.$store.getters.gameOver;
-            },
-            gameWon() {
-                return this.$store.getters.gameWon;
-            }
-        },
-        methods: {
-        },
-        components: {
-            Board,
-            Score,
-            Overlay
-        }
-    }
+export default {
+  name: 'app',
+  computed: {
+    gameOver() {
+      return this.$store.getters.gameOver;
+    },
+    gameWon() {
+      return this.$store.getters.gameWon;
+    },
+  },
+  methods: {
+  },
+  components: {
+    Board,
+    Score,
+    Overlay,
+  },
+};
 </script>
 
 <style>

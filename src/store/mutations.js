@@ -1,65 +1,79 @@
-import Tile from './models/tile';
-import GameInitState from './models/game';
+class Cell {
+  constructor(x, y, index, value = null) {
+    this.value = value;
+    this.x = x;
+    this.y = y;
+    this.mergeCell = null;
+    // this.id = Math.random().toString(36).replace('0.', '');
+    this.index = index;
+  }
+
+  canAccept(value) {
+    return (
+      this.value == null
+      || (this.mergeCell == null && this.value === value)
+    );
+  }
+}
 
 export default {
   reset(state) {
-    state.game = { ...GameInitState };
-    for (let x = 0; x < state.game.size; x++) {
-      state.grid.push([]);
-      for (let y = 0; y < state.game.size; y++) {
-        state.grid[x].push(null);
-      }
+    state.grid = [];
+    for (let i = 0; i < state.board.size * state.board.size; i++) {
+      state.grid.push(
+        new Cell(i % state.board.size, Math.floor(i / state.board.size), i),
+      );
+    }
+    state.score = 0;
+    state.gameOver = false;
+    state.gameWon = false;
+  },
+  insertRandomTile(state, emptyCells) {
+    if (emptyCells.length) {
+      const randomIndex = Math.floor(Math.random() * emptyCells.length);
+      state.grid[emptyCells[randomIndex].index].value = Math.random() > 0.5 ? 2 : 4;
     }
   },
-  insertRandomTile(state, availableCells) {
-    const randomAvailableCell = (availableCells.length)
-      ? availableCells[Math.floor(Math.random() * availableCells.length)]
-      : null;
+  slideTiles(state, cells) {
+    cells.flatMap((group) => {
+      for (let i = 1; i < group.length; i++) {
+        const cell = group[i];
 
-    if (availableCells.length) {
-      const value = Math.random() < 0.9 ? 2 : 4;
+        if (cell.value === null) {
+          // eslint-disable-next-line no-continue
+          continue;
+        }
 
-      state.grid[randomAvailableCell.x].splice(randomAvailableCell.y, 1, new Tile(randomAvailableCell, value));
-    }
-  },
-  insertTile(state, tile) {
-    if (tile) {
-      state.grid[tile.x].splice(tile.y, 1, tile);
-    }
-  },
-  removeTile(state, { x, y }) {
-    state.grid[x].splice(y, 1, null);
-  },
-  // Save all tile positions and remove merger info
-  prepareTiles(state) {
-    let tile;
+        let lastValidCell;
+        for (let j = i - 1; j >= 0; j--) {
+          const moveToCell = group[j];
+          if (!moveToCell.canAccept(cell.value)) {
+            break;
+          }
+          lastValidCell = moveToCell;
+        }
 
-    for (let x = 0; x < state.game.size; x++) {
-      for (let y = 0; y < state.game.size; y++) {
-        tile = state.grid[x][y];
-
-        if (tile) {
-          tile.mergedFrom = null;
-          tile.previousPosition = { x: tile.x, y: tile.y };
+        if (lastValidCell != null) {
+          if (lastValidCell.value != null) {
+            state.grid[lastValidCell.index].mergeCell = { ...cell };
+          } else {
+            state.grid[lastValidCell.index].value = cell.value;
+          }
+          state.grid[cell.index].value = null;
         }
       }
-    }
+    });
   },
-  // Move a tile and its representation
-  moveTile(state, { tile, position }) {
-    const tileClone = { ...tile };
-    state.grid[tileClone.x].splice(tileClone.y, 1, null);
-    state.grid[position.x].splice(position.y, 1, tileClone);
-    tileClone.x = position.x;
-    tileClone.y = position.y;
+  mergeCell(state, cell) {
+    state.grid[cell.index].value += cell.mergeCell.value;
+    state.grid[cell.index].mergeCell.value = null;
+    state.grid[cell.index].mergeCell = null;
+    state.score += state.grid[cell.index].value;
   },
-  incrementScore(state, score) {
-    state.game.score += score;
+  gameOver(state) {
+    state.gameOver = true;
   },
-  setGameWon(state, won) {
-    state.game.won = won;
-  },
-  setGameOver(state, over) {
-    state.game.over = over;
+  gameWon(state) {
+    state.gameWon = true;
   },
 };

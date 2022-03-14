@@ -1,6 +1,11 @@
-import GameInitState from './models/game';
+const GRID_SIZE = 4;
 
 export default {
-  game: { ...GameInitState },
   grid: [],
+  board: {
+    size: GRID_SIZE,
+  },
+  score: 0,
+  gameOver: false,
+  gameWon: false,
 };
